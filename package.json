@@ -1,0 +1,122 @@
+{
+  "name": "record-press",
+  "version": "0.1.0",
+  "description": "A machine for manufacturing JavaScript records.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "mocha",
+    "tdd": "mocha -w -R min",
+    "cover": "nyc mocha",
+    "lint": "eslint --ext .ts .",
+    "prepare": "tsc"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix"
+    ]
+  },
+  "mocha": {
+    "extension": [
+      "ts"
+    ],
+    "spec": "src/**/*.test.ts",
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.test.ts"
+    ],
+    "reporter": [
+      "html",
+      "text-summary"
+    ],
+    "cache": false,
+    "temp-dir": "coverage/.nyc_output/"
+  },
+  "eslintConfig": {
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "tsconfig.json"
+    },
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "standard-with-typescript"
+    ],
+    "rules": {
+      "padded-blocks": [
+        "error",
+        {
+          "classes": "always"
+        }
+      ],
+      "@typescript-eslint/consistent-type-definitions": [
+        "error",
+        "type"
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "varsIgnorePattern": "_*"
+        }
+      ],
+      "@typescript-eslint/space-before-function-paren": [
+        "error",
+        {
+          "anonymous": "always",
+          "named": "never",
+          "asyncArrow": "always"
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "dist/",
+    "coverage/",
+    "node_modules/"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/faker": "^4.1.11",
+    "@types/mocha": "^7.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
+    "chai": "^4.2.0",
+    "chai-struct": "^3.0.4",
+    "eslint": "^6.8.0",
+    "eslint-config-standard-with-typescript": "^15.0.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "husky": "^4.2.3",
+    "lint-staged": "^10.0.9",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.0",
+    "ts-node": "^8.8.1",
+    "typescript": "^3.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thebearingedge/record-press.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thebearingedge/record-press/issues"
+  },
+  "homepage": "https://github.com/thebearingedge/record-press#readme"
+}
