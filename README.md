@@ -62,7 +62,7 @@ Specify the number of records the generator should produce.
 
 #### `options.override Object` (optional)
 
-Specify a partial object to copy properties from. This is useful if you want to guaranty the value of any of the record's properties.
+Specify a partial object to copy properties from. This is useful if you want to ensure the value of any of the record's properties.
 
 #### `options.retries Number` (default `5000`)
 
