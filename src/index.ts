@@ -51,7 +51,7 @@ export = function recordPress<R extends Record<string, Data>>(config: Config<R>)
     }
     return (record: R) => JSON.stringify(unique.map(key => record[key]))
   })
-  return function * generator(options?: Options<R>) {
+  return function * generator(options?: Options<R>): Generator<R> {
     const indexer = new Indexer(uniqueBy)
     const { count = 1, retries = 5000, override } = options ?? {}
     let retry = 0
