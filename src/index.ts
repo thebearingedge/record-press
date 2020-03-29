@@ -3,7 +3,6 @@ type Data =
   null |
   number |
   string |
-  Date |
   Data[] |
   { toJSON(): string } |
   { [key: string]: Data }
