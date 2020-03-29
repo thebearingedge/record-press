@@ -80,7 +80,7 @@ it('generates records with unique composite keys', () => {
   expect(coordinates).to.have.lengthOf(25)
 })
 
-it('generates records with unique generated keys', () => {
+it('generates records with unique computed keys', () => {
   const generator = recordPress({
     factory: () => ({
       x: randomInteger(4),
