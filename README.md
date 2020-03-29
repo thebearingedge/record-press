@@ -87,8 +87,8 @@ const generator = recordPress({
 it('generates records with unique keys', () => {
   const generator = recordPress({
     factory: () => ({
-      x: randomInteger(24),
-      y: randomInteger(24)
+      x: faker.random.number(24),
+      y: faker.random.number(24)
     }),
     uniqueBy: [
       'x', // no two points may have the same "x"
@@ -105,8 +105,8 @@ it('generates records with unique keys', () => {
 it('generates records with unique composite keys', () => {
   const generator = recordPress({
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
+      x: faker.random.number(4),
+      y: faker.random.number(4)
     }),
     uniqueBy: [
       ['x', 'y']
@@ -121,8 +121,8 @@ it('generates records with unique composite keys', () => {
 it('generates records with unique generated keys', () => {
   const generator = recordPress({
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
+      x: faker.random.number(4),
+      y: faker.random.number(4)
     }),
     uniqueBy: [
       ({ x, y }) => `${x}, ${y}`
@@ -141,8 +141,8 @@ it('generates records with unique generated keys', () => {
 it('overrides values on each record', () => {
   const generator = recordPress({
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
+      x: faker.random.number(4),
+      y: faker.random.number(4)
     })
   })
   for (const point of generator({ count: 5, override: { x: 0 } })) {
