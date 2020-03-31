@@ -1,17 +1,18 @@
 {
   "name": "record-press",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A machine for manufacturing JavaScript records.",
   "main": "dist/index.js",
   "files": [
-    "dist/"
+    "dist/index.js",
+    "dist/index.d.ts"
   ],
   "scripts": {
     "test": "mocha",
     "tdd": "mocha -w -R min",
     "cover": "nyc mocha",
     "lint": "eslint --ext .ts .",
-    "prepare": "tsc -p tsconfig.publish.json"
+    "prepare": "tsc"
   },
   "husky": {
     "hooks": {
