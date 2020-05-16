@@ -1,73 +1,66 @@
-type Data =
-  boolean |
-  null |
-  number |
-  string |
-  Data[] |
-  { toJSON(): string } |
-  { [key: string]: Data }
+import createGenerator from './generator'
+import Table, { UniqueBy } from './table'
+import { Many, Row, RowSet, toArray } from './util'
 
-type KeyGen<R> = (record: R) => string
+type Seed<F extends (...args: any) => any> = Many<Partial<ReturnType<F>>>
 
-type Property<R> = Extract<keyof R, string>
-
-type Unique<R> = Property<R> | Array<Property<R>> | KeyGen<R>
-
-type Config<R> = {
-  factory: () => R
-  uniqueBy?: Array<Unique<R>>
-}
-
-type Options<R> = {
-  count?: number
+type BuildOptions = {
   retries?: number
-  override?: Partial<R>
 }
 
-class Indexer<R> {
+type Rows<F extends (...args: any) => any> = Array<ReturnType<F>>
 
-  private readonly indexes: Array<Record<string, boolean>>
-
-  constructor(uniqueBy: Array<Unique<R>>) {
-    this.indexes = uniqueBy.map(() => Object.create(null))
+type Build<E extends Entity> = {
+  [K in keyof E]: {
+    (seed?: Seed<E[K]>, options?: BuildOptions): Rows<E[K]>
   }
-
-  has(keys: string[]): boolean {
-    return this.indexes.some((keyed, index) => keyed[keys[index]])
-  }
-
-  add(keys: string[]): void {
-    this.indexes.forEach((keyed, index) => { keyed[keys[index]] = true })
-  }
-
 }
 
-export = function recordPress<R extends Record<string, Data>>(config: Config<R>) {
-  const { factory, uniqueBy = [] } = config
-  const keyGens = uniqueBy.map(unique => {
-    if (typeof unique === 'function') return unique
-    if (typeof unique === 'string') {
-      return (record: R) => JSON.stringify(record[unique])
-    }
-    return (record: R) => JSON.stringify(unique.map(key => record[key]))
-  })
-  return function * generator(options?: Options<R>): Generator<R> {
-    const indexer = new Indexer(uniqueBy)
-    const { count = 1, retries = 5000, override } = options ?? {}
-    let retry = 0
-    let succeeded = 0
-    while (succeeded < count) {
-      const record = Object.assign(factory(), override)
-      const keys = keyGens.map(keyGen => keyGen(record))
-      if (!indexer.has(keys)) {
-        succeeded++
-        indexer.add(keys)
-        yield record
-        continue
-      }
-      if (++retry > retries) {
-        throw new Error(`record press generator exceeded ${retries} retries`)
-      }
+type Entity = Record<string, () => Row>
+
+type Schema<E extends Entity> = {
+  [K in keyof E]: {
+    factory: E[K]
+    uniqueBy?: UniqueBy<ReturnType<E[K]>>
+  }
+}
+
+type Records<E extends Entity> = {
+  dump: () => RowSet[]
+  press: (builder: (build: Build<E>) => void) => Records<E>
+}
+
+const DEFAULT_MAX_RETRIES = 5000
+
+const createRecordPress = <E extends Entity>(schema: Schema<E>): Records<E> => {
+
+  const rowSets: RowSet[] = []
+  const build: Build<E> = Object.create(null)
+  const tables: Map<keyof E, Table<ReturnType<E[keyof E]>>> = new Map()
+
+  for (const type in schema) {
+    const { factory, uniqueBy = [] } = schema[type]
+    const table = new Table(type, uniqueBy)
+    tables.set(type, table)
+    build[type] = (seed, options) => {
+      const { retries = DEFAULT_MAX_RETRIES } = options ?? {}
+      const generator = createGenerator(table, factory, { retries })
+      const rows = toArray(seed).map(partial => generator.next(partial).value)
+      rowSets.push({ type, rows })
+      return rows
     }
   }
+
+  return {
+    press(builder) {
+      builder(build)
+      return this
+    },
+    dump() {
+      tables.forEach(indexer => indexer.clear())
+      return rowSets.splice(0, rowSets.length)
+    }
+  }
 }
+
+export default createRecordPress

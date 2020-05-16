@@ -1,19 +1,16 @@
 {
   "compilerOptions": {
-    "downlevelIteration": true,
     "esModuleInterop": true,
-    "lib": ["es6"],
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "outDir": "dist/",
     "declaration": true,
-    "target": "es5"
+    "lib": [
+      "es2017"
+    ],
+    "module": "commonjs",
+    "outDir": "dist/",
+    "strict": true,
+    "target": "es6"
   },
   "include": [
     "src/**/*"
-  ],
-  "exclude": [
-    "node_modules/",
-    "coverage/"
   ]
 }
