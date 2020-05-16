@@ -9,11 +9,6 @@ type Field =
 
 export type Row = Record<string, Field>
 
-export type RowSet = {
-  rows: Row[]
-  type: string
-}
-
 export type Many<T> = T | T[]
 
 export type Option<T> = T | undefined

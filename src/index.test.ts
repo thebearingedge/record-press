@@ -9,7 +9,10 @@ const records = recordPress({
       petId: faker.random.uuid(),
       breed: faker.lorem.word(),
       age: faker.random.number()
-    })
+    }),
+    uniqueBy: [
+      ({ breed, age }) => breed + age.toString()
+    ]
   },
   petOwners: {
     factory: () => ({
@@ -32,8 +35,7 @@ const records = recordPress({
       'userId',
       'email',
       'username',
-      ['firstName', 'lastName'],
-      ({ firstName }) => firstName + 'five'
+      ['firstName', 'lastName']
     ]
   }
 })
@@ -99,8 +101,8 @@ it('creates records with unique keys', () => {
 it('creates records with unique composite keys', () => {
   const nonUniqueCompositeKeys = (): void => {
     records.press(build => build.users([
-      { firstName: 'joey', lastName: 'joe-joe' },
-      { firstName: 'joey', lastName: 'joe-joe' }
+      { firstName: 'joey', lastName: 'joe joe junior shabadoo' },
+      { firstName: 'joey', lastName: 'joe joe junior shabadoo' }
     ], { retries: 5 }))
   }
   expect(nonUniqueCompositeKeys).to.throw(
@@ -111,13 +113,13 @@ it('creates records with unique composite keys', () => {
 
 it('creates records with unique computed keys', () => {
   const nonUniqueComputedKeys = (): void => {
-    records.press(build => build.users([
-      { firstName: 'johnny' },
-      { firstName: 'johnny' }
+    records.press(build => build.pets([
+      { breed: 'bengal', age: 1 },
+      { breed: 'bengal', age: 1 }
     ], { retries: 5 }))
   }
   expect(nonUniqueComputedKeys).to.throw(
     Error,
-    'failed to create unique "users" row after 5 retries'
+    'failed to create unique "pets" row after 5 retries'
   )
 })
