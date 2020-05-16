@@ -10,9 +10,3 @@ type Field =
 export type Row = Record<string, Field>
 
 export type Many<T> = T | T[]
-
-export type Option<T> = T | undefined
-
-export const toArray = <T>(value: Many<T>): T[] => {
-  return Array.isArray(value) ? value : [value]
-}

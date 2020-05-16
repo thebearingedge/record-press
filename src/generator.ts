@@ -1,19 +1,19 @@
 import Table from './table'
-import { Row, Option } from './util'
+import { Row } from './util'
 
 type Factory = () => Row
 
-type GeneratorOptions = {
+type RowGenOptions = {
   retries: number
 }
 
-type RowGen<R> = Generator<R, never, Option<Partial<R>>>
+type RowGen<R> = Generator<R, never, Partial<R> | undefined>
 
-type CreateGenerator = {
-  <R>(table: Table<R>, factory: Factory, options: GeneratorOptions): RowGen<R>
+type CreateRowGen = {
+  <R>(table: Table<R>, factory: Factory, options: RowGenOptions): RowGen<R>
 }
 
-const createGenerator: CreateGenerator = (table, factory, { retries }) => {
+const createRowGen: CreateRowGen = (table, factory, { retries }) => {
   const generator = (function * () {
     let partial = yield
     let failures = retries
@@ -34,4 +34,4 @@ const createGenerator: CreateGenerator = (table, factory, { retries }) => {
   return generator
 }
 
-export default createGenerator
+export default createRowGen

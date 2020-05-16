@@ -1,6 +1,6 @@
-import createGenerator from './generator'
+import { Many, Row } from './util'
+import createRowGen from './generator'
 import Table, { UniqueBy } from './table'
-import { Many, Row, toArray } from './util'
 
 type Batch = {
   rows: Row[]
@@ -56,6 +56,10 @@ type Schema<E extends Entity> = {
 
 const DEFAULT_MAX_RETRIES = 5000
 
+const toArray = <T>(value: Many<T>): T[] => {
+  return Array.isArray(value) ? value : [value]
+}
+
 /**
  * Creates a stateful record store based on the provided schema.
  * The returned object houses records for each type described in the schema.
@@ -72,8 +76,8 @@ const recordPress = <E extends Entity>(schema: Schema<E>): RecordStore<E> => {
     tables.set(type, table)
     build[type] = (seed, options) => {
       const { retries = DEFAULT_MAX_RETRIES } = options ?? {}
-      const generator = createGenerator(table, factory, { retries })
-      const rows = toArray(seed).map(partial => generator.next(partial).value)
+      const rowGen = createRowGen(table, factory, { retries })
+      const rows = toArray(seed).map(partial => rowGen.next(partial).value)
       batches.push({ type, rows })
       return rows
     }
