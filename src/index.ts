@@ -4,11 +4,13 @@ import { Many, Row, RowSet, toArray } from './util'
 
 type Seed<F extends (...args: any) => any> = Many<Partial<ReturnType<F>>>
 
+type Rows<F extends (...args: any) => any> = Array<ReturnType<F>>
+
 type BuildOptions = {
   retries?: number
 }
 
-type Rows<F extends (...args: any) => any> = Array<ReturnType<F>>
+type Entity = Record<string, () => Row>
 
 type Build<E extends Entity> = {
   [K in keyof E]: {
@@ -16,18 +18,16 @@ type Build<E extends Entity> = {
   }
 }
 
-type Entity = Record<string, () => Row>
+type Records<E extends Entity> = {
+  dump: () => RowSet[]
+  press: (builder: (build: Build<E>) => void) => Records<E>
+}
 
 type Schema<E extends Entity> = {
   [K in keyof E]: {
     factory: E[K]
     uniqueBy?: UniqueBy<ReturnType<E[K]>>
   }
-}
-
-type Records<E extends Entity> = {
-  dump: () => RowSet[]
-  press: (builder: (build: Build<E>) => void) => Records<E>
 }
 
 const DEFAULT_MAX_RETRIES = 5000

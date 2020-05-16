@@ -4,7 +4,7 @@ type Field =
   | number
   | string
   | Field[]
-  | { toJSON(): string }
+  | { toJSON: () => string }
   | { [key: string]: Field }
 
 export type Row = Record<string, Field>
