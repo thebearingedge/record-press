@@ -1,18 +1,19 @@
 {
   "name": "record-press",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A machine for manufacturing JavaScript records.",
   "main": "dist/index.js",
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts"
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "!dist/**/*.test.*"
   ],
   "scripts": {
     "test": "mocha",
     "tdd": "mocha -w -R min",
     "cover": "nyc mocha",
     "lint": "eslint --ext .ts .",
-    "prepare": "tsc"
+    "prepack": "tsc"
   },
   "husky": {
     "hooks": {
@@ -36,6 +37,9 @@
   "nyc": {
     "extension": [
       ".ts"
+    ],
+    "include": [
+      "src/**/*.ts"
     ],
     "exclude": [
       "**/*.test.ts"
@@ -70,12 +74,7 @@
         "error",
         "type"
       ],
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "varsIgnorePattern": "_*"
-        }
-      ],
+      "@typescript-eslint/prefer-function-type": "off",
       "@typescript-eslint/space-before-function-paren": [
         "error",
         {
@@ -95,25 +94,26 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/chai": "^4.2.11",
-    "@types/faker": "^4.1.11",
-    "@types/mocha": "^7.0.2",
-    "@typescript-eslint/eslint-plugin": "^2.25.0",
-    "@typescript-eslint/parser": "^2.25.0",
-    "chai": "^4.2.0",
-    "chai-struct": "^3.0.4",
-    "eslint": "^6.8.0",
-    "eslint-config-standard-with-typescript": "^15.0.1",
-    "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1",
-    "husky": "^4.2.3",
-    "lint-staged": "^10.0.9",
-    "mocha": "^7.1.1",
-    "nyc": "^15.0.0",
-    "ts-node": "^8.8.1",
-    "typescript": "^3.8.3"
+    "@types/chai": "4.2.11",
+    "@types/faker": "4.1.12",
+    "@types/mocha": "7.0.2",
+    "@types/node": "14.0.1",
+    "@typescript-eslint/eslint-plugin": "2.33.0",
+    "@typescript-eslint/parser": "2.33.0",
+    "chai": "4.2.0",
+    "eslint": "7.0.0",
+    "eslint-config-standard-with-typescript": "17.0.0",
+    "eslint-plugin-import": "2.20.2",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.0.1",
+    "faker": "4.1.0",
+    "husky": "4.2.5",
+    "lint-staged": "10.2.2",
+    "mocha": "7.1.2",
+    "nyc": "15.0.1",
+    "ts-node": "8.10.1",
+    "typescript": "3.9.2"
   },
   "repository": {
     "type": "git",

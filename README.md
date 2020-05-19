@@ -4,11 +4,25 @@ A machine for manufacturing JavaScript records.
 
 ## What is it?
 
-`record-press` is a helper library for generating JavaScript records. It aims to fill the gap between libraries like [`faker`](https://github.com/marak/Faker.js) or [`casual`](https://github.com/boo1ean/casual) and uniqueness across a collection of objects.
+`record-press` is a small utility library for generating JavaScript records. It aims to help generate test data for things like API integration tests. Other, more powerful projects exist like those that mimic [`factory_bot`](https://github.com/thoughtbot/factory_bot). `record-press` is more simplistic in its approach to avoiding ["mystery guests"](https://thoughtbot.com/blog/mystery-guest).
 
-This library is not very ambitious. It's [less than 100 lines of Typescript](https://github.com/thebearingedge/record-press/blob/master/src/index.ts). I just got tired of re-implementing the same de-duplication strategy in each of my projects.
+`record-press` is written in Typescript mostly for autocomplete convenience.
+
+All records are dumb data: no classes or behavior. Primarily intended for seeding relational databases, nesting of associated entities is not supported. Output from `record-press` is easy to write to the database. Your access patterns are up to your app.
+
+## Overview
+
+1. You define a "schema" of the types of database records your app manages.
+
+1. You build up your record collections, (optionally) assigning arbitrary property values to them as well as any necessary foreign key values.
+
+1. `record-press` attempts to create unique records according to  constraints you specify in your schema.
+
+1. You dump the generated records and upload them into your database.
 
 **Note:** `record-press` does not directly depend on any particular data generation library. `faker` is only used in the below examples.
+
+**Note:** `record-press` does not directly depend on any particular database technology.
 
 ## Installation
 
@@ -27,148 +41,131 @@ const recordPress = require('record-press')
 
 ## API
 
-```shell
-recordPress(config) -> generator(options)
-```
+### `recordPress(schema) -> records`
 
-This package exports a single function. Calling it with a basic configuration object returns a [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*).
+This package exports a single function. Calling it with a "schema" returns a record factory.
 
-### `config Object`
-
-#### `config.factory Function` (required)
-
-The `factory` property of your `config` object should be a function returns a plain JavaScript object. You can use whatever random data library you want. All properties of the object are assumed to be serializable with `JSON.stringify()`. By default, no uniqueness is guaranteed.
-
-#### `config.uniqueBy Array` (optional)
-
-The `uniqueBy` property of your `config` object should be an array of "constraints". Each constraint can be represented in one of three ways:
-
-- A single property of each record.<br/>
-  No two records may have the same value for this property.
-- A combination of properties on each record.<br/>
-  No two records may have the same composite value for these properties.
-- A function that computes a string, given a record.<br/>
-  No two records may cause this function to produce the same string.
-
-Records that are output by the `config.factory` will be rejected if they violate any of these "constraints".
-
-### `generator(options)`
-
-Once you have created a generator function, you can call it with a couple of `options`.
-
-#### `options.count Number` (default `1`)
-
-Specify the number of records the generator should produce.
-
-#### `options.override Object` (optional)
-
-Specify a partial object to copy properties from. This is useful if you want to ensure the value of any of the record's properties.
-
-#### `options.retries Number` (default `5000`)
-
-Collisions can occur when dealing with random data. The generator will detect them and discard records that do not conform to the rules specified in `uniqueBy`. By default, up to `5000` collisions are tolerated before an `Error` is thrown.
-
-## Examples
-
-### `config.factory`
+A "schema" is an object where each key is the name of an entity, paired with a **required factory function** and **optional unique constraints**. Again, `faker` is only here as an example.
 
 ```js
-const generator = recordPress({
-  factory: () => ({
-    x: faker.random.number(),
-    y: faker.random.number()
-  })
-})
-```
-
-### `config.uniqueBy`
-
-```js
-it('generates records with unique keys', () => {
-  const generator = recordPress({
+const records = recordPress({
+  users: {
     factory: () => ({
-      x: faker.random.number(24),
-      y: faker.random.number(24)
+      userId: faker.random.uuid(),
+      email: faker.internet.email()
     }),
     uniqueBy: [
-      'x', // no two points may have the same "x"
-      'y'  // no two points may have the same "y"
+      'userId',
+      'email'
     ]
-  })
-  const [...points] = generator({ count: 25 })
-  const xs = new Set(points.map(({ x }) => x))
-  const ys = new Set(points.map(({ y }) => y))
-  expect(xs).to.have.lengthOf(25)
-  expect(ys).to.have.lengthOf(25)
-})
-
-it('generates records with unique composite keys', () => {
-  const generator = recordPress({
+  },
+  pets: {
     factory: () => ({
-      x: faker.random.number(4),
-      y: faker.random.number(4)
+      petId: faker.random.uuid(),
+      breed: faker.lorem.word(),
+      age: faker.random.number()
     }),
     uniqueBy: [
-      ['x', 'y']
-      // no two points may have the same coordinates
+      'petId'
     ]
-  })
-  const [...points] = generator({ count: 25 })
-  const coordinates = new Set(points.map(({ x, y }) => `${x}, ${y}`))
-  expect(coordinates).to.have.lengthOf(25)
-})
-
-it('generates records with unique computed keys', () => {
-  const generator = recordPress({
+  },
+  petOwners: {
     factory: () => ({
-      x: faker.random.number(4),
-      y: faker.random.number(4)
+      petId: faker.random.uuid(),
+      userId: faker.random.uuid()
     }),
     uniqueBy: [
-      ({ x, y }) => `${x}, ${y}`
-      // no two points may have the same coordinates
+      ['petId', 'userId']
     ]
-  })
-  const [...points] = generator({ count: 25 })
-  const coordinates = new Set(points.map(({ x, y }) => `${x}, ${y}`))
-  expect(coordinates).to.have.lengthOf(25)
-})
-```
-
-### `options.override`
-
-```js
-it('overrides values on each record', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: faker.random.number(4),
-      y: faker.random.number(4)
-    })
-  })
-  for (const point of generator({ count: 5, override: { x: 0 } })) {
-    expect(point).to.include({ x: 0 })
   }
 })
 ```
 
-### `options.retries`
+#### `entity.factory Function` (required)
+
+The `factory` property of your `entity` objects should be a function returns a plain JavaScript object. You can use whatever random data library you want. All properties of the object are assumed to be serializable with `JSON.stringify()`. By default, no uniqueness is guaranteed.
+
+#### `entity.uniqueBy Array` (optional)
+
+The `uniqueBy` property of your `entity` objects should be an array of "constraints". Each constraint can be represented in one of three ways:
+
+- A single property key of each record.<br/>
+  No two records may have the same value for this property.
+- A composite of properties on each record.<br/>
+  No two records may have the same composite value for these properties.
+- A function that computes a string, given a record.<br/>
+  No two records may cause this function to produce the same string.
+
+Records that are output by the entity's `factory` will be rejected if they violate any of these "constraints".
+
+
+### `records.press(builderFn(factories)) -> this`
+
+To begin (or resume) building records, pass a "builder" function to `records.press()`. Your "builder" will receive a set of factories as described in your schema. Each record built is stored within your `records` instance so that data is de-duplicated according to any provided unique constraints.
+
+Arbitrary values can be assigned to a generated record in the form of a partial (or complete) representation of said record. That way you can have some control over the data being generated, right when you need it. The most common use case for me is adding foreign keys.
 
 ```js
-it('throws after too many retries', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: 0,
-      y: 0
-    }),
-    uniqueBy: [
-      ['x', 'y']
-      // impossible for more than one record
-    ]
+records.press(build => {
+  const [cat] = build.pets([ // build a cat and a dog
+    { breed: 'cat' },
+    { breed: 'dog' }
+  ])
+  const [user] = build.users() // build one person
+  build.petOwners({ // assign the cat to the person
+    petId: cat.petId,
+    userId: user.userId
   })
-  expect(() => {
-    const iterator = generator({ count: 2, retries: 3 })
-    iterator.next()
-    iterator.next()
-  }).to.throw(Error, 'record press generator exceeded 3 retries')
 })
 ```
+
+### `records.dump() -> recordSets`
+
+Get all generated records in batches, in order of creation. Each batch of records has a `type` naming the entity and the rows that were created. `records` is also reset to an empty state. Given the above example `records.dump()` would output something like:
+
+```js
+[
+  {
+    type: 'pets',
+    rows: [
+      {
+        petId: '1603d7fa-0750-4dd8-acf4-66c7195d6ae6',
+        breed: 'cat',
+        age: 35026
+      },
+      {
+        petId: '36b26778-cbfe-4da3-a79c-f84531274089',
+        breed: 'dog',
+        age: 88337
+      }
+    ]
+  },
+  {
+    type: 'users',
+    rows: [
+      {
+        userId: '65a3886e-8e4c-4e07-8231-1ed2feb7c273',
+        email: 'Kyla0@gmail.com',
+        username: 'Bulah_Harvey',
+        firstName: 'Carli',
+        lastName: 'Reichert'
+      }
+    ]
+  },
+  {
+    type: 'petOwners',
+    rows: [
+      {
+        petId: '1603d7fa-0750-4dd8-acf4-66c7195d6ae6',
+        userId: '65a3886e-8e4c-4e07-8231-1ed2feb7c273'
+      }
+    ]
+  }
+]
+```
+
+The dump can then be easily inserted into a database.
+
+## Examples
+
+Please see the tests in `index.test.ts` for usage examples.

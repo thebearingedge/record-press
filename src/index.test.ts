@@ -1,113 +1,125 @@
 import 'mocha'
-import chai, { expect } from 'chai'
-import { chaiStruct } from 'chai-struct'
+import faker from 'faker'
+import { expect } from 'chai'
 import recordPress from '.'
 
-chai.use(chaiStruct)
-
-function randomInteger(max: number): number {
-  return Math.floor(Math.random() * (max + 1))
-}
-
-it('generates a single record', () => {
-  const generator = recordPress({
+const records = recordPress({
+  pets: {
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
-    })
-  })
-  const [...onePoint] = generator()
-  expect(onePoint)
-    .to.have.lengthOf(1)
-    .and.structure([{ x: Number, y: Number }])
-})
-
-it('generates multiple records', () => {
-  const generator = recordPress({
+      petId: faker.random.uuid(),
+      breed: faker.lorem.word(),
+      age: faker.random.number()
+    }),
+    uniqueBy: [
+      ({ breed, age }) => breed + age.toString()
+    ]
+  },
+  petOwners: {
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
-    })
-  })
-  const [...fivePoints] = generator({ count: 5 })
-  expect(fivePoints)
-    .to.have.lengthOf(5)
-    .and.structure([{ x: Number, y: Number }])
-})
-
-it('overrides values on each record', () => {
-  const generator = recordPress({
+      petId: faker.random.uuid(),
+      userId: faker.random.uuid()
+    }),
+    uniqueBy: [
+      ['petId', 'userId']
+    ]
+  },
+  users: {
     factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
-    })
-  })
-  for (const point of generator({ count: 5, override: { x: 0 } })) {
-    expect(point).to.include({ x: 0 })
+      userId: faker.random.uuid(),
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName()
+    }),
+    uniqueBy: [
+      'userId',
+      'email',
+      'username',
+      ['firstName', 'lastName']
+    ]
   }
 })
 
-it('generates records with unique keys', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: randomInteger(24),
-      y: randomInteger(24)
-    }),
-    uniqueBy: [
-      'x',
-      'y'
-    ]
+it('creates a single record', () => {
+  records.press(build => build.users({
+    username: 'cmdshift'
+  }))
+  const [{ type, rows: [user] }] = records.dump()
+  expect(type).to.equal('users')
+  expect(user).to.include({
+    username: 'cmdshift'
   })
-  const [...points] = generator({ count: 25 })
-  const xs = new Set(points.map(({ x }) => x))
-  const ys = new Set(points.map(({ y }) => y))
-  expect(xs).to.have.lengthOf(25)
-  expect(ys).to.have.lengthOf(25)
 })
 
-it('generates records with unique composite keys', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
-    }),
-    uniqueBy: [
-      ['x', 'y']
-    ]
-  })
-  const [...points] = generator({ count: 25 })
-  const coordinates = new Set(points.map(({ x, y }) => `${x}|${y}`))
-  expect(coordinates).to.have.lengthOf(25)
+it('creates multiple records', () => {
+  records.press(build => build.users([
+    { username: 'moe' },
+    { username: 'curly' },
+    { username: 'larry' }
+  ]))
+  const [{ type, rows: [moe, curly, larry] }] = records.dump()
+  expect(type).to.equal('users')
+  expect(moe).to.include({ username: 'moe' })
+  expect(curly).to.include({ username: 'curly' })
+  expect(larry).to.include({ username: 'larry' })
 })
 
-it('generates records with unique computed keys', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: randomInteger(4),
-      y: randomInteger(4)
-    }),
-    uniqueBy: [
-      ({ x, y }) => `${x}|${y}`
-    ]
+it('creates records of different types', () => {
+  records.press(build => {
+    const [{ userId }] = build.users({
+      username: 'john'
+    })
+    const pets = build.pets([
+      { breed: 'cat' },
+      { breed: 'dog' }
+    ])
+    build.petOwners(pets.map(({ petId }) => ({
+      userId,
+      petId
+    })))
   })
-  const [...points] = generator({ count: 25 })
-  const coordinates = new Set(points.map(({ x, y }) => `${x}|${y}`))
-  expect(coordinates).to.have.lengthOf(25)
+  const [users, pets, petOwners] = records.dump()
+  petOwners.rows.forEach(({ userId, petId }, index) => {
+    expect(userId).to.equal(users.rows[0].userId)
+    expect(petId).to.equal(pets.rows[index].petId)
+  })
 })
 
-it('throws after too many retries', () => {
-  const generator = recordPress({
-    factory: () => ({
-      x: 0,
-      y: 0
-    }),
-    uniqueBy: [
-      ['x', 'y']
-    ]
-  })
-  expect(() => {
-    const iterator = generator({ count: 2, retries: 3 })
-    iterator.next()
-    iterator.next()
-  }).to.throw(Error, 'record press generator exceeded 3 retries')
+it('creates records with unique keys', () => {
+  const nonUniqueKey = (): void => {
+    records.press(build => build.users([
+      { username: 'moe' },
+      { username: 'moe' }
+    ], { retries: 5 }))
+  }
+  expect(nonUniqueKey).to.throw(
+    Error,
+    'failed to create unique "users" row after 5 retries'
+  )
+})
+
+it('creates records with unique composite keys', () => {
+  const nonUniqueCompositeKeys = (): void => {
+    records.press(build => build.users([
+      { firstName: 'joey', lastName: 'joe joe junior shabadoo' },
+      { firstName: 'joey', lastName: 'joe joe junior shabadoo' }
+    ], { retries: 5 }))
+  }
+  expect(nonUniqueCompositeKeys).to.throw(
+    Error,
+    'failed to create unique "users" row after 5 retries'
+  )
+})
+
+it('creates records with unique computed keys', () => {
+  const nonUniqueComputedKeys = (): void => {
+    records.press(build => build.pets([
+      { breed: 'bengal', age: 1 },
+      { breed: 'bengal', age: 1 }
+    ], { retries: 5 }))
+  }
+  expect(nonUniqueComputedKeys).to.throw(
+    Error,
+    'failed to create unique "pets" row after 5 retries'
+  )
 })
