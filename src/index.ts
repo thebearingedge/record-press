@@ -89,7 +89,7 @@ const recordPress = <E extends Entity>(schema: Schema<E>): RecordStore<E> => {
       return this
     },
     dump() {
-      tables.forEach(indexer => indexer.clear())
+      tables.forEach(table => table.clear())
       return batches.splice(0, batches.length)
     }
   }
