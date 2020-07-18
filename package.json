@@ -92,7 +92,7 @@
   ],
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/chai": "4.2.11",
     "@types/faker": "4.1.12",
